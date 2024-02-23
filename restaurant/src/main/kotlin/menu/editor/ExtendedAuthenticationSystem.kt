@@ -15,7 +15,6 @@ class ExtendedAuthenticationSystem(
     }
 
     private fun adminMenu() {
-        val menuManager = InMemoryMenuManager("menu.txt")
 
         while (true) {
             println("Меню администратора:")
