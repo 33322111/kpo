@@ -34,7 +34,7 @@ class InMemoryMenuManager(private val menuFile: String) : MenuManager {
     override fun editDish(dishNumber: Int, property: String, value: Any) {
         if (dishNumber in 1..menu.size) {
             val dish = menu[dishNumber - 1]
-            when (property.toLowerCase()) {
+            when (property.lowercase()) {
                 "quantity" -> {
                     if (value is Int && value > 0) {
                         dish.quantity = value
