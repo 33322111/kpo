@@ -1,6 +1,6 @@
 package authentication
 
-class AuthenticationSystem(private val userRepository: UserRepository) {
+open class AuthenticationSystem(private val userRepository: UserRepository) {
     fun registerUser(username: String, password: String, userType: UserType) {
         val existingUser = userRepository.getUser(username)
         if (existingUser != null) {
@@ -17,7 +17,7 @@ class AuthenticationSystem(private val userRepository: UserRepository) {
         }
     }
 
-    fun authenticateUser(username: String, password: String, userType: UserType): Boolean {
+    open fun authenticateUser(username: String, password: String, userType: UserType): Boolean {
         val user = userRepository.getUser(username)
 
         if (user != null && user.password == password && user.userType == userType) {

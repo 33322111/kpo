@@ -1,10 +1,13 @@
-import authentication.AuthenticationSystem
 import authentication.FileUserRepository
 import authentication.UserType
 
+import menu.editor.InMemoryMenuManager
+import menu.editor.ExtendedAuthenticationSystem
+
 fun main() {
-    val userRepository = FileUserRepository("user_data.txt")
-    val authenticationSystem = AuthenticationSystem(userRepository)
+    val userService = FileUserRepository("user_data.txt")
+    val menuManager = InMemoryMenuManager("menu.txt")
+    val authenticationSystem = ExtendedAuthenticationSystem(userService, menuManager)
 
     var authenticated = false
 
@@ -26,7 +29,7 @@ fun main() {
                 println("Введите пароль:")
                 val password = readLine().orEmpty()
 
-                authenticationSystem.registerUser(username, password, userType)
+                userService.createUser(username, password, userType)
             }
             2 -> {
                 println("Выберите тип пользователя: 1 - Посетитель, 2 - Администратор")
