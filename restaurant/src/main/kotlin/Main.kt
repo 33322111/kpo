@@ -23,12 +23,19 @@ fun main() {
                         continue
                     }
                 }
-                println("Введите логин:")
-                val username = readLine().orEmpty()
-                println("Введите пароль:")
-                val password = readLine().orEmpty()
+                var isAuthenticated = false
+                var username = ""
+                while (!isAuthenticated) {
+                    println("Введите логин:")
+                    username = readLine().orEmpty()
 
-                userService.createUser(username, password, userType)
+                    println("Введите пароль:")
+                    val password = readLine().orEmpty()
+
+                    isAuthenticated = authenticationSystem.registerUser(username, password, userType)
+                }
+
+                println("Пользователь $username успешно зарегистрирован!")
             }
             2 -> {
                 println("Выберите тип пользователя: 1 - Посетитель, 2 - Администратор")

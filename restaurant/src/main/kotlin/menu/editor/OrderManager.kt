@@ -1,8 +1,8 @@
 package menu.editor
 
 import java.io.File
-import kotlin.math.max
-
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class OrderManager(private val orderFile: String, private val menuManager: MenuManager) {
     private var orders: MutableList<Order> = loadOrders()
@@ -27,7 +27,7 @@ class OrderManager(private val orderFile: String, private val menuManager: MenuM
                     order.dishes.add(orderedDish)
                     dish.quantity -= quantity
                     order.totalPrice += orderedDish.calculateTotalPrice()
-                    order.maxCookingTime = max(order.maxCookingTime, orderedDish.dish.cookingTime)
+                    order.maxCookingTime = maxOf(order.maxCookingTime, orderedDish.dish.cookingTime)
                     println("Блюдо добавлено в заказ.")
                 } else {
                     println("Ошибка: Некорректное количество порций.")
@@ -42,17 +42,31 @@ class OrderManager(private val orderFile: String, private val menuManager: MenuM
             }
 
             println("Хотите добавить еще блюдо в заказ? (да/любая другая строка):")
-        } while (readLine()?.toLowerCase() == "да")
+        } while (readLine()?.lowercase() == "да")
 
         if (order.totalPrice > 0.0) {
             orders.add(order)
             saveOrders()
+
+            processOrderAsync(order)
+
             println("Спасибо, Ваш заказ №${orders.indexOf(order) + 1} принят в работу! " +
                     "Суммарная стоимость заказа: ${order.totalPrice} руб. " +
                     "Время приготовления: ${order.maxCookingTime} мин.")
         } else {
             println("Ошибка: Итоговая сумма заказа равна 0. Пожалуйста, добавьте блюда в заказ.")
         }
+    }
+
+    private fun processOrderAsync(order: Order) {
+        val executorService = Executors.newSingleThreadExecutor()
+        executorService.submit {
+            println("Приготовление заказа №${orders.indexOf(order) + 1} началось.")
+            TimeUnit.SECONDS.sleep(order.maxCookingTime.toLong())
+            println("Заказ №${orders.indexOf(order) + 1} готов!")
+        }
+        executorService.shutdown()
+        saveOrders()
     }
 
     private fun loadOrders(): MutableList<Order> {
