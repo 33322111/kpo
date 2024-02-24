@@ -6,14 +6,37 @@ class ExtendedAuthenticationSystem(
     private val userService: FileUserRepository,
     private val menuManager: MenuManager
 ) : AuthenticationSystem(userService) {
+    private var authenticatedUsername: String = ""
+
     override fun authenticateUser(username: String, password: String, userType: UserType): Boolean {
         val isAuthenticated = super.authenticateUser(username, password, userType)
+        authenticatedUsername = username
         if (isAuthenticated && userType == UserType.ADMIN) {
             adminMenu()
+        }
+        if (isAuthenticated && userType == UserType.VISITOR) {
+            visitorMenu()
         }
         return isAuthenticated
     }
 
+    private fun visitorMenu() {
+        val orderActions = OrderManager("orders.txt", menuManager)
+
+        while (true) {
+            println("Меню посетителя:")
+            println("1. Посмотреть всё меню")
+            println("2. Сделать заказ")
+            println("3. Выйти из ресторана")
+
+            when (readLine()?.toIntOrNull()) {
+                1 -> viewFullMenu()
+                2 -> orderActions.makeOrder(authenticatedUsername)
+                3 -> return
+                else -> println("Некорректный выбор.")
+            }
+        }
+    }
     private fun adminMenu() {
 
         while (true) {
@@ -102,4 +125,5 @@ class ExtendedAuthenticationSystem(
         }
         menuManager.editDish(dishNumber, property, value)
     }
+
 }
