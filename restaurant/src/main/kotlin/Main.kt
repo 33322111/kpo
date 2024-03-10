@@ -10,8 +10,8 @@ fun main() {
 
     var authenticated = false
 
-    while (!authenticated) {
-        println("Выберите действие: 1 - Регистрация, 2 - Аутентификация")
+    while (true) {
+        println("Выберите действие: 1 - Регистрация, 2 - Аутентификация, 3 - Закончить работу ресторана")
         when (readLine()?.toIntOrNull()) {
             1 -> {
                 println("Выберите тип пользователя: 1 - Посетитель, 2 - Администратор")
@@ -56,6 +56,9 @@ fun main() {
                 if (!authenticated) {
                     println("Повторите попытку.")
                 }
+            }
+            3 -> {
+                break
             }
             else -> {
                 println("Некорректный выбор действия.")

@@ -27,12 +27,14 @@ class ExtendedAuthenticationSystem(
             println("Меню посетителя:")
             println("1. Посмотреть всё меню")
             println("2. Сделать заказ")
-            println("3. Выйти из ресторана")
+            println("3. Добавить блюдо в заказ")
+            println("4. Выйти из ресторана")
 
             when (readLine()?.toIntOrNull()) {
                 1 -> viewFullMenu()
                 2 -> orderActions.makeOrder(authenticatedUsername)
-                3 -> return
+                3 -> orderActions.addDishToOrder(authenticatedUsername)
+                4 -> return
                 else -> println("Некорректный выбор.")
             }
         }

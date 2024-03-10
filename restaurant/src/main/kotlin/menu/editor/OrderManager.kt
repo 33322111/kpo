@@ -3,13 +3,14 @@ package menu.editor
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
 
 class OrderManager(private val orderFile: String, private val menuManager: MenuManager) {
     private var orders: MutableList<Order> = loadOrders()
 
 
     fun makeOrder(username: String) {
-        val order = Order(username, mutableListOf(), 0.0, 0)
+        val order = Order(username, mutableListOf(), 0.0, 0, DishStatus.NOT_STARTED)
 
         do {
             menuManager.displayMenu()
@@ -46,7 +47,6 @@ class OrderManager(private val orderFile: String, private val menuManager: MenuM
 
         if (order.totalPrice > 0.0) {
             orders.add(order)
-            saveOrders()
 
             processOrderAsync(order)
 
@@ -58,15 +58,71 @@ class OrderManager(private val orderFile: String, private val menuManager: MenuM
         }
     }
 
+    fun addDishToOrder(username: String) {
+        val userOrders = orders.filter { it.user == username && it.status != DishStatus.READY }
+        if (userOrders.isEmpty()) {
+            println("У вас нет активных заказов.")
+            return
+        }
+
+        println("Выберите номер заказа для добавления блюда:")
+        userOrders.forEachIndexed { index, order ->
+            println("${index + 1}. Заказ №${orders.indexOf(order) + 1} - ${order.status}")
+        }
+
+
+        val selectedOrderIndex = readLine()?.toIntOrNull()?.minus(1)
+        if (selectedOrderIndex != null && selectedOrderIndex in 0 until userOrders.size) {
+            val selectedOrder = userOrders[selectedOrderIndex]
+            val existingMenu = menuManager.getMenu()
+
+            println("Выберите блюдо для добавления:")
+            existingMenu.forEachIndexed { index, dish ->
+                println("${index + 1}. ${dish.name} - ${dish.price} руб., ${dish.quantity} порций, готовится за ${dish.cookingTime} мин.")
+            }
+
+            val selectedDishIndex = readLine()?.toIntOrNull()?.minus(1)
+            if (selectedDishIndex != null && selectedDishIndex in 0 until existingMenu.size) {
+                val selectedDish = existingMenu[selectedDishIndex]
+
+                println("Введите количество порций (максимум ${selectedDish.quantity}):")
+                val quantity = readLine()?.toIntOrNull()
+
+                if (quantity != null && quantity > 0 && quantity <= selectedDish.quantity) {
+                    val orderedDish = OrderedDish(selectedDish, quantity)
+                    selectedOrder.dishes.add(orderedDish)
+                    selectedDish.quantity -= quantity
+
+                    selectedOrder.maxCookingTime = max(selectedOrder.maxCookingTime, selectedDish.cookingTime)
+                    selectedOrder.totalPrice += selectedDish.price * quantity
+
+                    println("Блюдо успешно добавлено в заказ. Обновленное содержание заказа:")
+                    selectedOrder.displayOrder()
+                } else {
+                    println("Ошибка: Некорректное количество порций.")
+                }
+            } else {
+                println("Ошибка: Некорректный номер блюда.")
+            }
+        } else {
+            println("Ошибка: Некорректный номер заказа.")
+        }
+    }
+
+
+
+
     private fun processOrderAsync(order: Order) {
         val executorService = Executors.newSingleThreadExecutor()
         executorService.submit {
             println("Приготовление заказа №${orders.indexOf(order) + 1} началось.")
+            order.status = DishStatus.COOKING
             TimeUnit.SECONDS.sleep(order.maxCookingTime.toLong())
             println("Заказ №${orders.indexOf(order) + 1} готов!")
+            order.status = DishStatus.READY
+            saveOrders()
         }
         executorService.shutdown()
-        saveOrders()
     }
 
     private fun loadOrders(): MutableList<Order> {
@@ -81,10 +137,11 @@ class OrderManager(private val orderFile: String, private val menuManager: MenuM
         val parts = line.split(";")
         if (parts.size >= 4) {
             val userId = parts[0]
-            val dishes = parts.subList(1, parts.size - 1).mapNotNull { parseOrderedDish(it) }
-            val totalPrice = parts[parts.size - 1].toDoubleOrNull()
+            val dishes = parts.subList(1, parts.size - 2).mapNotNull { parseOrderedDish(it) }
+            val totalPrice = parts[parts.size - 2].toDoubleOrNull()
+            val status = DishStatus.valueOf(parts[parts.size - 1])
             if (userId != null && dishes.isNotEmpty() && totalPrice != null) {
-                return Order(userId, dishes.toMutableList(), totalPrice)
+                return Order(userId, dishes.toMutableList(), totalPrice, 0, status)
             }
         }
         return null
@@ -98,7 +155,8 @@ class OrderManager(private val orderFile: String, private val menuManager: MenuM
         val username = order.user
         val dishes = order.dishes.joinToString(";") { formatOrderedDish(it) }
         val totalPrice = order.totalPrice
-        return "$username;$dishes;$totalPrice"
+        var status = order.status
+        return "$username;$dishes;$totalPrice;$status"
     }
 
     private fun parseOrderedDish(line: String): OrderedDish? {
