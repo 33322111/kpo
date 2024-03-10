@@ -58,8 +58,57 @@ class OrderManager(private val orderFile: String, private val menuManager: MenuM
         }
     }
 
+    fun deleteOrder(username: String) {
+        val userOrders = orders.filter { it.user == username && it.status != DishStatus.READY && it.status != DishStatus.CANCELLED && it.status != DishStatus.PAID }
+        if (userOrders.isEmpty()) {
+            println("У вас нет активных заказов.")
+            return
+        }
+
+        println("Выберите номер заказа для отмены:")
+        userOrders.forEachIndexed { index, order ->
+            println("${index + 1}. Заказ №${orders.indexOf(order) + 1} - ${order.status}")
+        }
+
+        val selectedOrderIndex = readLine()?.toIntOrNull()?.minus(1)
+        if (selectedOrderIndex != null && selectedOrderIndex in 0 until userOrders.size) {
+            val selectedOrder = userOrders[selectedOrderIndex]
+            selectedOrder.status = DishStatus.CANCELLED
+            for (orderedDish in selectedOrder.dishes) {
+                val dishFromMenu = menuManager.getMenu().find { it.name == orderedDish.dish.name }
+                var quantityInMenu = dishFromMenu?.quantity ?: 0
+                quantityInMenu += orderedDish.quantity
+                dishFromMenu?.quantity = quantityInMenu
+            }
+            println("Ваш заказ успешно отменён!")
+        } else {
+            println("Ошибка: Некорректный номер заказа.")
+        }
+    }
+
+    fun payOrder(username: String) {
+        val userOrders = orders.filter { it.user == username && it.status == DishStatus.READY }
+        if (userOrders.isEmpty()) {
+            println("У вас нет неоплаченных заказов.")
+            return
+        }
+
+        println("Выберите номер заказа для оплаты:")
+        userOrders.forEachIndexed { index, order ->
+            println("${index + 1}. Заказ №${orders.indexOf(order) + 1} - ${order.status} - ${order.totalPrice}р.")
+        }
+
+        val selectedOrderIndex = readLine()?.toIntOrNull()?.minus(1)
+        if (selectedOrderIndex != null && selectedOrderIndex in 0 until userOrders.size) {
+            val selectedOrder = userOrders[selectedOrderIndex]
+            selectedOrder.status = DishStatus.PAID
+            println("Ваш заказ успешно оплачен!")
+        } else {
+            println("Ошибка: Некорректный номер заказа.")
+        }
+    }
     fun addDishToOrder(username: String) {
-        val userOrders = orders.filter { it.user == username && it.status != DishStatus.READY }
+        val userOrders = orders.filter { it.user == username && it.status != DishStatus.READY && it.status != DishStatus.CANCELLED && it.status != DishStatus.PAID}
         if (userOrders.isEmpty()) {
             println("У вас нет активных заказов.")
             return
@@ -110,17 +159,17 @@ class OrderManager(private val orderFile: String, private val menuManager: MenuM
     }
 
 
-
-
     private fun processOrderAsync(order: Order) {
         val executorService = Executors.newSingleThreadExecutor()
         executorService.submit {
             println("Приготовление заказа №${orders.indexOf(order) + 1} началось.")
             order.status = DishStatus.COOKING
             TimeUnit.SECONDS.sleep(order.maxCookingTime.toLong())
-            println("Заказ №${orders.indexOf(order) + 1} готов!")
-            order.status = DishStatus.READY
-            saveOrders()
+            if (order.status != DishStatus.CANCELLED) {
+                println("Заказ №${orders.indexOf(order) + 1} готов!")
+                order.status = DishStatus.READY
+                saveOrders()
+            }
         }
         executorService.shutdown()
     }
