@@ -7,6 +7,7 @@ class ExtendedAuthenticationSystem(
     private val menuManager: MenuManager
 ) : AuthenticationSystem(userService) {
     private var authenticatedUsername: String = ""
+    private val orderActions = OrderManager("orders.txt", menuManager)
 
     override fun authenticateUser(username: String, password: String, userType: UserType): Boolean {
         val isAuthenticated = super.authenticateUser(username, password, userType)
@@ -21,7 +22,6 @@ class ExtendedAuthenticationSystem(
     }
 
     private fun visitorMenu() {
-        val orderActions = OrderManager("orders.txt", menuManager)
 
         while (true) {
             println("Меню посетителя:")
@@ -51,18 +51,22 @@ class ExtendedAuthenticationSystem(
             println("2. Удалить блюдо")
             println("3. Редактировать блюдо")
             println("4. Посмотреть всё меню")
-            println("5. Закончить смену")
+            println("5. Посмотреть доход ресторана")
+            println("6. Закончить смену")
 
             when (readLine()?.toIntOrNull()) {
                 1 -> addDish()
                 2 -> removeDish()
                 3 -> editDish()
                 4 -> viewFullMenu()
-                5 -> return
+                5 -> orderActions.getProfit()
+                6 -> return
                 else -> println("Некорректный выбор.")
             }
         }
     }
+
+
 
     private fun addDish() {
         println("Введите название блюда:")

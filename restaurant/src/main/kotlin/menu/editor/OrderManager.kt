@@ -107,6 +107,13 @@ class OrderManager(private val orderFile: String, private val menuManager: MenuM
             println("Ошибка: Некорректный номер заказа.")
         }
     }
+
+    fun getProfit() {
+        print("Прибыль ресторана от заказов: ")
+        println(orders.filter { it.status == DishStatus.READY }
+            .sumOf { it.totalPrice })
+    }
+
     fun addDishToOrder(username: String) {
         val userOrders = orders.filter { it.user == username && it.status != DishStatus.READY && it.status != DishStatus.CANCELLED && it.status != DishStatus.PAID}
         if (userOrders.isEmpty()) {

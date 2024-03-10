@@ -3,7 +3,6 @@ import authentication.UserType
 
 import menu.editor.InMemoryMenuManager
 import menu.editor.ExtendedAuthenticationSystem
-import menu.editor.OrderManager
 fun main() {
     val userService = FileUserRepository("user_data.txt")
     val menuManager = InMemoryMenuManager("menu.txt")

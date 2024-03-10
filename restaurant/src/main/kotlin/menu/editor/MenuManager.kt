@@ -7,5 +7,4 @@ interface MenuManager {
     fun editDish(dishNumber: Int, property: String, value: Any)
     fun viewFullMenu()
     fun getMenu(): List<Dish>
-
 }
